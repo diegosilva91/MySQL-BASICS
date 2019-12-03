@@ -22,9 +22,49 @@ INNER JOIN dept_emp ON salaries.emp_no=dept_emp.emp_no
 INNER JOIN titles ON salaries.emp_no=titles.emp_no
 LEFT JOIN dept_manager ON salaries.emp_no=dept_manager.emp_no
 WHERE salary>=20000;
-/**********************************/
+/*******************************************/
+/*First check before to delete the data, the deparment that has more employees (it doesn’t necessary to check before delete)*********************/
 SELECT dept_no, COUNT(dept_no) AS count
 FROM dept_emp
 GROUP BY dept_no
 order by count DESC
 LIMIT 1;
+/*Then execute the query to delete*/
+DELETE dept_emp , employees, salaries, titles, dept_manager FROM employees
+	INNER JOIN
+    dept_emp ON employees.emp_no = dept_emp.emp_no 
+    INNER JOIN
+    salaries ON employees.emp_no = salaries.emp_no 
+    INNER JOIN
+    titles ON employees.emp_no = titles.emp_no 
+    left JOIN
+    dept_manager ON employees.emp_no = dept_manager.emp_no 
+WHERE
+    dept_emp.dept_no IN (SELECT 
+        dept_no
+    FROM
+        (SELECT 
+            dept_emp.dept_no, COUNT(dept_emp.dept_no) AS count
+        FROM
+            dept_emp
+        GROUP BY dept_no
+        ORDER BY COUNT(dept_no) DESC
+        LIMIT 1) AS T);
+/*The results contains all departments without the first of the last group of results. To check in the main table “employees”, the department*/
+SELECT employees.emp_no, dept_emp.dept_no
+FROM employees
+INNER JOIN dept_emp ON employees.emp_no=dept_emp.emp_no
+where EXISTS (SELECT dept_emp.dept_no
+FROM dept_emp
+GROUP BY dept_no
+order by count(dept_no) DESC
+LIMIT 1);
+/******/
+DELETE dept_emp , employees FROM employees
+        INNER JOIN
+    dept_emp ON employees.emp_no = dept_emp.emp_no 
+WHERE dept_no IN(SELECT dept_no FROM(SELECT dept_emp.dept_no, COUNT(dept_emp.dept_no) AS count
+FROM dept_emp
+GROUP BY dept_no
+order by count(dept_no) DESC
+LIMIT 1)AS T);
